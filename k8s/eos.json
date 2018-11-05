@@ -1,0 +1,187 @@
+{
+  "kind": "Deployment",
+  "apiVersion": "extensions/v1beta1",
+  "metadata": {
+    "name": "eos-dm",
+    "namespace": "default",
+    "selfLink": "/apis/extensions/v1beta1/namespaces/default/deployments/eos-dm",
+    "uid": "4a5b54ea-d735-11e8-8772-00163e0cc780",
+    "resourceVersion": "95669",
+    "generation": 1,
+    "creationTimestamp": "2018-10-24T02:34:11Z",
+    "labels": {
+      "io.kompose.service": "eos"
+    },
+    "annotations": {
+      "deployment.kubernetes.io/revision": "1"
+    }
+  },
+  "spec": {
+    "replicas": 1,
+    "selector": {
+      "matchLabels": {
+        "io.kompose.service": "eos"
+      }
+    },
+    "template": {
+      "metadata": {
+        "creationTimestamp": null,
+        "labels": {
+          "io.kompose.service": "eos"
+        }
+      },
+      "spec": {
+        "volumes": [
+          {
+            "name": "nodeosd-config-vm",
+            "configMap": {
+              "name": "configini",
+              "defaultMode": 420
+            }
+          }
+        ],
+        "containers": [
+          {
+            "name": "mongod",
+            "image": "mongo",
+            "command": [
+              "bash",
+              "-c",
+              "$(mongo_cmd)"
+            ],
+            "ports": [
+              {
+                "containerPort": 27017,
+                "protocol": "TCP"
+              }
+            ],
+            "env": [
+              {
+                "name": "mongo_cmd",
+                "valueFrom": {
+                  "configMapKeyRef": {
+                    "name": "eosconfig",
+                    "key": "mongo_cmd"
+                  }
+                }
+              }
+            ],
+            "resources": {},
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "imagePullPolicy": "Always"
+          },
+          {
+            "name": "nodeosd",
+            "image": "eosio/eos:v1.2.0",
+            "command": [
+              "bash",
+              "-c",
+              "sleep 16; $(nodeosd_cmd)"
+            ],
+            "ports": [
+              {
+                "containerPort": 8888,
+                "protocol": "TCP"
+              },
+              {
+                "containerPort": 9876,
+                "protocol": "TCP"
+              }
+            ],
+            "env": [
+              {
+                "name": "nodeosd_cmd",
+                "valueFrom": {
+                  "configMapKeyRef": {
+                    "name": "eosconfig",
+                    "key": "nodeosd_cmd"
+                  }
+                }
+              }
+            ],
+            "resources": {},
+            "volumeMounts": [
+              {
+                "name": "nodeosd-config-vm",
+                "mountPath": "/config/"
+              }
+            ],
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "imagePullPolicy": "IfNotPresent"
+          },
+          {
+            "name": "keosd",
+            "image": "eosio/eos:v1.2.0",
+            "command": [
+              "bash",
+              "-c",
+              "sleep 16; $(keosd_cmd)"
+            ],
+            "ports": [
+              {
+                "containerPort": 8900,
+                "protocol": "TCP"
+              }
+            ],
+            "env": [
+              {
+                "name": "keosd_cmd",
+                "valueFrom": {
+                  "configMapKeyRef": {
+                    "name": "eosconfig",
+                    "key": "keosd_cmd"
+                  }
+                }
+              }
+            ],
+            "resources": {},
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "imagePullPolicy": "IfNotPresent"
+          }
+        ],
+        "restartPolicy": "Always",
+        "terminationGracePeriodSeconds": 30,
+        "dnsPolicy": "ClusterFirst",
+        "securityContext": {},
+        "schedulerName": "default-scheduler"
+      }
+    },
+    "strategy": {
+      "type": "RollingUpdate",
+      "rollingUpdate": {
+        "maxUnavailable": 1,
+        "maxSurge": 1
+      }
+    },
+    "revisionHistoryLimit": 10,
+    "progressDeadlineSeconds": 600
+  },
+  "status": {
+    "observedGeneration": 1,
+    "replicas": 1,
+    "updatedReplicas": 1,
+    "readyReplicas": 1,
+    "availableReplicas": 1,
+    "conditions": [
+      {
+        "type": "Available",
+        "status": "True",
+        "lastUpdateTime": "2018-10-24T02:34:11Z",
+        "lastTransitionTime": "2018-10-24T02:34:11Z",
+        "reason": "MinimumReplicasAvailable",
+        "message": "Deployment has minimum availability."
+      },
+      {
+        "type": "Progressing",
+        "status": "True",
+        "lastUpdateTime": "2018-10-24T02:34:17Z",
+        "lastTransitionTime": "2018-10-24T02:34:11Z",
+        "reason": "NewReplicaSetAvailable",
+        "message": "ReplicaSet \"eos-dm-64b77ff6fd\" has successfully progressed."
+      }
+    ]
+  }
+}
